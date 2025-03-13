@@ -42,6 +42,7 @@ class PCB:
         self.comment4 = comment4
         self.bbox = (0, 0, 0, 0)
         self.items = []
+        self.custom_layers = []
 
     def add_line(self, x1, y1, x2, y2, *, layer: str = "F.SilkS", width: float = 0.1):
         self.items.append(
@@ -223,6 +224,9 @@ class PCB:
     def add_literal(self, val: str):
         self.items.append(s.L(val))
 
+    def add_custom_layer(self, layer_id: str):
+        self.custom_layers.append(layer_id)
+
     def write(self, filename_or_io):
         pcb = s.kicad_pcb(
             s.general(thickness=1.6),
@@ -233,26 +237,30 @@ class PCB:
                 comments=[self.comment1, self.comment2, self.comment3, self.comment4],
             ),
             s.layers(
-                s.layer_def(0, "F.Cu", "signal"),
-                s.layer_def(31, "B.Cu", "signal"),
-                s.layer_def(32, "B.Adhes", "user", "B.Adhesive"),
-                s.layer_def(33, "F.Adhes", "user", "F.Adhesive"),
-                s.layer_def(34, "B.Paste", "user"),
-                s.layer_def(35, "F.Paste", "user"),
-                s.layer_def(36, "B.SilkS", "user", "B.Silkscreen"),
-                s.layer_def(37, "F.SilkS", "user", "F.Silkscreen"),
-                s.layer_def(38, "B.Mask", "user"),
-                s.layer_def(39, "F.Mask", "user"),
-                s.layer_def(40, "Dwgs.User", "user", "User.Drawings"),
-                s.layer_def(41, "Cmts.User", "user", "User.Comments"),
-                s.layer_def(42, "Eco1.User", "user", "User.Eco1"),
-                s.layer_def(43, "Eco2.User", "user", "User.Eco2"),
-                s.layer_def(44, "Edge.Cuts", "user"),
-                s.layer_def(45, "Margin", "user"),
-                s.layer_def(46, "B.CrtYd", "user", "B.Courtyard"),
-                s.layer_def(47, "F.CrtYd", "user", "F.Courtyard"),
-                s.layer_def(48, "B.Fab", "user"),
-                s.layer_def(49, "F.Fab", "user"),
+                *([
+                    s.layer_def(0, "F.Cu", "signal"),
+                    s.layer_def(31, "B.Cu", "signal"),
+                    s.layer_def(32, "B.Adhes", "user", "B.Adhesive"),
+                    s.layer_def(33, "F.Adhes", "user", "F.Adhesive"),
+                    s.layer_def(34, "B.Paste", "user"),
+                    s.layer_def(35, "F.Paste", "user"),
+                    s.layer_def(36, "B.SilkS", "user", "B.Silkscreen"),
+                    s.layer_def(37, "F.SilkS", "user", "F.Silkscreen"),
+                    s.layer_def(38, "B.Mask", "user"),
+                    s.layer_def(39, "F.Mask", "user"),
+                    s.layer_def(50, "Dwgs.User", "user", "User.Drawings"),
+                    s.layer_def(51, "Cmts.User", "user", "User.Comments"),
+                    s.layer_def(52, "Eco1.User", "user", "User.Eco1"),
+                    s.layer_def(53, "Eco2.User", "user", "User.Eco2"),
+                    s.layer_def(54, "Edge.Cuts", "user"),
+                    s.layer_def(55, "Margin", "user"),
+                    s.layer_def(56, "B.CrtYd", "user", "B.Courtyard"),
+                    s.layer_def(57, "F.CrtYd", "user", "F.Courtyard"),
+                    s.layer_def(58, "B.Fab", "user"),
+                    s.layer_def(59, "F.Fab", "user")
+                ] + [
+                    s.layer_def(40 + index, f"User.{index + 1}", "user", layer_id) for index, layer_id in enumerate(self.custom_layers)
+                ])
             ),
             s.setup(grid_origin=self.offset),
             s.net(0, ""),

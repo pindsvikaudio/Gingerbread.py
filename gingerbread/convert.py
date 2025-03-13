@@ -4,8 +4,10 @@
 
 import argparse
 import datetime
+import fnmatch
 import pathlib
 import sys
+from xml.etree.ElementTree import Element
 
 import svgpathtools
 import svgpathtools.svg_to_paths
@@ -24,6 +26,7 @@ _GRAPHIC_LAYERS = {
     "F.Mask": ("F.Mask", "FMask"),
     "B.Mask": ("B.Mask", "BMask"),
 }
+_WILDCARD_GRAPHIC_LAYERS = ["F.*.Mask", "B.*.Mask"]
 
 
 class ConversionError(RuntimeError):
@@ -222,6 +225,17 @@ class Converter:
         # having to shell out to bitmap2component, but when we switched to
         # gingerbread.trace the threads no longer saved any time.
         print("[bold]Converting graphic layers")
+
+        # process wildcards in graphic layers
+        user_layer_count = 0
+        for alias in _WILDCARD_GRAPHIC_LAYERS:
+            root_elements: Element = self.doc.csstree.etree_children
+            layer_ids = fnmatch.filter([element.attrib["id"] for element in root_elements], alias)
+            for layer_id in layer_ids:
+                user_layer_count += 1
+                _GRAPHIC_LAYERS[f"User.{user_layer_count}"] = [layer_id]
+                self.pcb.add_custom_layer(layer_id)
+
 
         for canonical, aliases in _GRAPHIC_LAYERS.items():
             svg_filename = self.workdir / f"{canonical}.svg"
